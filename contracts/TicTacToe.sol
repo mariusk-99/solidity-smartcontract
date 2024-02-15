@@ -1,6 +1,5 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.4.24;
-
 /**
  * @title TicTacToe contract
  **/
@@ -13,6 +12,9 @@ contract TicTacToe {
      2 - players[1]'s turn
      */
     uint public turn = 1;
+
+    // Count no. of moves
+    uint private movesTotal = 0;
 
     /**
      status
@@ -48,7 +50,13 @@ contract TicTacToe {
       * @param c position c
       **/    
     function _threeInALine(uint a, uint b, uint c) private view returns (bool){
-        /*Please complete the code here.*/
+        if(board[a]==0 || board[b]==0 || board[c]==0){
+            return false;
+        }
+        if (board[a]==board[b] && board[b] == board[c]){
+            return true;
+        } 
+        return false;
     }
 
     /**
@@ -56,17 +64,43 @@ contract TicTacToe {
      * @param pos the position the player places at
      * @return the status of the game
      */
+
     function _getStatus(uint pos) private view returns (uint) {
-        /*Please complete the code here.*/
+        
+        //Row check
+        uint row = pos/3;
+        if (_threeInALine(pos, (pos+1)%3 + 3*row, (pos+2)%3 +3*row)){
+            return turn%2 + 1;
+        }
+
+        //Column check
+        if (_threeInALine(pos, (pos+3)%9, (pos+6)%9)){
+            return turn%2 + 1;
+        }
+
+        //Diagonal check
+        if (pos%2==0 && board[4]!=0){
+          if (_threeInALine(0, 4, 8) || _threeInALine(2, 4, 6))
+          return turn%2 + 1;
+        }
+
+        //Draw check
+        if (movesTotal>=9)
+          return 3;
+
+        return 0;
     }
 
-    /**
+        /**
      * @dev ensure the game is still ongoing before a player moving
      * update the status of the game after a player moving
      * @param pos the position the player places at
      */
     modifier _checkStatus(uint pos) {
-        /*Please complete the code here.*/
+        require(status== 0);
+        _;
+        status = _getStatus(pos);
+        movesTotal+=1;
     }
 
     /**
@@ -74,7 +108,8 @@ contract TicTacToe {
      * @return true if it's msg.sender's turn otherwise false
      */
     function myTurn() public view returns (bool) {
-       /*Please complete the code here.*/
+        return msg.sender ==  players[turn-1];
+
     }
 
     /**
@@ -82,7 +117,9 @@ contract TicTacToe {
      * update the turn after a move
      */
     modifier _myTurn() {
-      /*Please complete the code here.*/
+        require(myTurn());
+        _;
+        turn = turn%2 +1;
     }
 
     /**
@@ -91,7 +128,7 @@ contract TicTacToe {
      * @return true if valid otherwise false
      */
     function validMove(uint pos) public view returns (bool) {
-      /*Please complete the code here.*/
+        return board[pos] == 0;
     }
 
     /**
@@ -99,13 +136,15 @@ contract TicTacToe {
      * @param pos the position the player places at
      */
     modifier _validMove(uint pos) {
-      /*Please complete the code here.*/
+        require(validMove(pos));
+        require(pos>=0 && pos<=8);
+        _;
     }
 
     /**
      * @dev a player makes a move
      * @param pos the position the player places at
-     */
+     */  
     function move(uint pos) public _validMove(pos) _checkStatus(pos) _myTurn {
         board[pos] = turn;
     }
@@ -115,6 +154,6 @@ contract TicTacToe {
      * @return board
      */
     function showBoard() public view returns (uint[9]) {
-      return board;
+        return board;
     }
 }
